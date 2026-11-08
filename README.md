@@ -53,6 +53,24 @@
 
 The exe isn't code-signed, so SmartScreen may warn the first time: choose **More info → Run anyway**.
 
+## Run it from PowerShell (no install)
+
+The console edition works on any Windows PC with PowerShell, with nothing to download or install:
+
+```powershell
+irm paxdigi.com/eventviewer | iex
+```
+
+It shows the same PC snapshot and the same plain-English problem digest (all 18 kinds, with what to try), lets you open any problem or event, browse and filter any log, copy ticket text (**T**) and save an HTML, text or JSON report (**R**). It runs in Windows PowerShell 5.1 and PowerShell 7 as a normal user; run it from an elevated prompt (or press **A**) to include failed sign-ins. It never changes anything on the PC.
+
+Non-interactive, for remote shells and scripts:
+
+```powershell
+& ([scriptblock]::Create((irm paxdigi.com/eventviewer))) -Report -Days 30
+& ([scriptblock]::Create((irm paxdigi.com/eventviewer))) -Export C:\Temp\pc.html
+```
+
+`-Ticket` copies the ticket text to the clipboard. The script is [`cli/PaxEventViewer.ps1`](cli/PaxEventViewer.ps1); the short address forwards to its raw GitHub copy.
 ## Command line
 
 | Option | What it does |
