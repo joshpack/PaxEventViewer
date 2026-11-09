@@ -5,7 +5,7 @@ using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using Microsoft.Win32;
 
-namespace PaxEventViewer.Core;
+namespace pxdEventViewer.Core;
 
 public sealed record DiskInfo(string Name, string Label, long Total, long Free, string Format)
 {

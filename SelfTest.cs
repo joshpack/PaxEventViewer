@@ -6,10 +6,10 @@ using Avalonia.Headless;
 using Avalonia.LogicalTree;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
-using PaxEventViewer.Core;
-using PaxEventViewer.Views;
+using pxdEventViewer.Core;
+using pxdEventViewer.Views;
 
-namespace PaxEventViewer;
+namespace pxdEventViewer;
 
 /// <summary>
 /// --self-test DIR [--sample]: checks the rules (every query runs against this PC's logs, read only), the message
@@ -34,7 +34,7 @@ internal static class SelfTest
 
     public static async Task RunAsync()
     {
-        R.AppendLine($"PAX Event Viewer {typeof(SelfTest).Assembly.GetName().Version?.ToString(3)} self-test, {(Sample ? "sample data" : "this PC")}, {DateTime.Now:yyyy-MM-dd HH:mm}");
+        R.AppendLine($"pxd Event Viewer {typeof(SelfTest).Assembly.GetName().Version?.ToString(3)} self-test, {(Sample ? "sample data" : "this PC")}, {DateTime.Now:yyyy-MM-dd HH:mm}");
         R.AppendLine($"Elevated: {Elevation.IsElevated}");
         R.AppendLine();
         try
@@ -46,6 +46,7 @@ internal static class SelfTest
             await Render(snap, dig);
             await Placement();
             SingleInstanceCheck();
+            MigrationCheck();
         }
         catch (Exception ex)
         {
@@ -143,8 +144,8 @@ internal static class SelfTest
         foreach (var r in dig.Results)
         {
             R.AppendLine($"    {r.Rule.Id,-20} {(r.Error is not null ? r.Error : r.Count + (r.Capped ? "+" : ""))}{(r.Count > 0 ? "  e.g. " + r.Items[0].Summary : "")}");
-            // PAXEV_DEBUG=1: the raw text of each first match, for checking the parsing against this PC's events.
-            if (Environment.GetEnvironmentVariable("PAXEV_DEBUG") == "1" && r.Count > 0)
+            // PXDEV_DEBUG=1: the raw text of each first match, for checking the parsing against this PC's events.
+            if (Environment.GetEnvironmentVariable("PXDEV_DEBUG") == "1" && r.Count > 0)
                 R.AppendLine("        msg: " + Events.Trim(r.Items[0].Message.Replace("\n", " / "), 200) + " props: " + string.Join("|", r.Items[0].Properties.Take(4)));
         }
         var unknown = dig.Results.Where(r => r.Error is not null && !(r.Rule.NeedsAdmin && !Elevation.IsElevated)).Select(r => $"{r.Rule.Id}: {r.Error}").ToList();
@@ -212,7 +213,7 @@ internal static class SelfTest
         var all = window.GetLogicalDescendants().ToList();
         Check("Title bar: icon, name, three caption buttons", window.WindowDecorations == WindowDecorations.BorderOnly
                                                                 && all.OfType<TextBlock>().Any(t => t.Text == window.Title)
-                                                                && all.OfType<Button>().Count(b => b.Classes.Contains("pax-caption")) == 3);
+                                                                && all.OfType<Button>().Count(b => b.Classes.Contains("pxd-caption")) == 3);
         window.Close();
         R.AppendLine();
     }
@@ -233,7 +234,7 @@ internal static class SelfTest
         var file = Path.Combine(Program.DataFolder, "windows.json");
         if (File.Exists(file)) File.Delete(file);
         var a = OffScreen();
-        PaxStandard.PaxChrome.RememberPlacement(a, key);
+        pxdStandard.pxdChrome.RememberPlacement(a, key);
         a.Show();
         await Task.Delay(50);
         a.Width = 1000;
@@ -245,7 +246,7 @@ internal static class SelfTest
         var json = File.Exists(file) ? await File.ReadAllTextAsync(file) : "";
         Check("Placement saved", json.Contains("\"selftest\"") && json.Contains("\"Width\":1000") && json.Contains("\"Height\":640"), json);
         var b = OffScreen();
-        PaxStandard.PaxChrome.RememberPlacement(b, key);
+        pxdStandard.pxdChrome.RememberPlacement(b, key);
         Check("Placement restored (size), off-screen spot ignored", b.Width == 1000 && b.Height == 640 && b.Position == new PixelPoint(-30000, -30000), $"{b.Width}x{b.Height} at {b.Position}");
         R.AppendLine();
     }
@@ -253,7 +254,7 @@ internal static class SelfTest
     private static void SingleInstanceCheck()
     {
         R.AppendLine("== Single instance ==");
-        var name = "PaxEventViewer-selftest-" + Guid.NewGuid().ToString("N")[..8];
+        var name = "pxdEventViewer-selftest-" + Guid.NewGuid().ToString("N")[..8];
         string[]? got = null;
         using var done = new ManualResetEventSlim();
         using (SingleInstance.Listen(name, args => { got = args; done.Set(); }))
@@ -261,6 +262,34 @@ internal static class SelfTest
             var sent = SingleInstance.Send(name, ["--from-second-start"]);
             done.Wait(3000);
             Check("Second start reaches the running copy", sent && got is ["--from-second-start"], got is null ? "nothing received" : string.Join("|", got));
+        }
+
+        R.AppendLine();
+    }
+
+    /// <summary>The one-time move of an older version's settings folder, in a temp root (never the real %APPDATA%).</summary>
+    private static void MigrationCheck()
+    {
+        R.AppendLine("== Migration from the former name ==");
+        var root = Path.Combine(Dir!, "migration-" + Guid.NewGuid().ToString("N")[..8]);
+        try
+        {
+            var oldDir = Path.Combine(root, pxdStandard.pxdMigrate.FormerName(Program.AppId));
+            var newDir = Path.Combine(root, Program.AppId);
+            Directory.CreateDirectory(oldDir);
+            File.WriteAllText(Path.Combine(oldDir, "windows.json"), "{\"main\":{}}");
+            Check("Former folder name comes from the app id", Path.GetFileName(oldDir) != Program.AppId && Path.GetFileName(oldDir).EndsWith("EventViewer"), oldDir);
+            var moved = Program.MigrateData(root);
+            Check("Old settings folder moved", moved && File.Exists(Path.Combine(newDir, "windows.json")) && !Directory.Exists(oldDir));
+            var again = Program.MigrateData(root);
+            Check("Second run does nothing", !again && File.Exists(Path.Combine(newDir, "windows.json")));
+            Directory.CreateDirectory(oldDir);
+            File.WriteAllText(Path.Combine(newDir, "windows.json"), "{\"kept\":1}");
+            Check("An existing new folder is never overwritten", !Program.MigrateData(root) && File.ReadAllText(Path.Combine(newDir, "windows.json")).Contains("kept"));
+        }
+        finally
+        {
+            try { Directory.Delete(root, recursive: true); } catch { /* temp */ }
         }
 
         R.AppendLine();

@@ -2,7 +2,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Security.Principal;
 
-namespace PaxEventViewer.Core;
+namespace pxdEventViewer.Core;
 
 /// <summary>Runs as the user; the Security log and a few event details need administrator rights, so the app can restart itself elevated.</summary>
 public static class Elevation
@@ -24,7 +24,7 @@ public static class Elevation
 
     public static ProcessStartInfo RestartInfo(string[] args) => new()
     {
-        FileName = Environment.ProcessPath ?? Path.Combine(AppContext.BaseDirectory, "PaxEventViewer.exe"),
+        FileName = Environment.ProcessPath ?? Path.Combine(AppContext.BaseDirectory, "pxdEventViewer.exe"),
         Arguments = string.Join(" ", args.Where(a => !a.Equals("--elevated", StringComparison.OrdinalIgnoreCase)).Select(Quote).Append("--elevated")),
         UseShellExecute = true,
         Verb = "runas",

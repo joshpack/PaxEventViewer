@@ -4,10 +4,10 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using ShapePath = Avalonia.Controls.Shapes.Path;
 
-namespace PaxEventViewer;
+namespace pxdEventViewer;
 
 /// <summary>
-/// PAX Event Viewer's icon: a log sheet with a yellow warning sign on an orange-to-red tile.
+/// pxd Event Viewer's icon: a log sheet with a yellow warning sign on an orange-to-red tile.
 /// Drawn from vector shapes so it stays crisp at every size; used for the window and the exe's .ico.
 /// </summary>
 public static class BrandIcon

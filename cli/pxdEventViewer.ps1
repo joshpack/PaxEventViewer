@@ -1,16 +1,16 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-    PAX Event Viewer (CLI) - the PC snapshot and event log digest, right in the console.
+    pxd Event Viewer (CLI) - the PC snapshot and event log digest, right in the console.
 
 .DESCRIPTION
-    The console edition of PAX Event Viewer. Nothing is installed and nothing on the PC is changed.
+    The console edition of pxd Event Viewer. Nothing is installed and nothing on the PC is changed.
     Run it straight from the web:
 
-        irm paxdigi.com/eventviewer | iex
+        irm pxdtek.com/ev | iex
 
-    (the short address forwards to
-        https://raw.githubusercontent.com/joshpack/PaxEventViewer/main/cli/PaxEventViewer.ps1)
+    (pxdtek.com serves the latest copy of
+        https://raw.githubusercontent.com/joshpack/pxdEventViewer/main/cli/pxdEventViewer.ps1)
 
     It shows a PC snapshot (Windows, uptime, pending reboot, hardware, disks, network, antivirus,
     updates) and a digest of the event logs that turns blue screens, unexpected shutdowns, crashes,
@@ -20,7 +20,7 @@
     Works as a normal user; only failed sign-ins (the Security log) need an elevated prompt.
 
     With parameters through the web:
-        & ([scriptblock]::Create((irm paxdigi.com/eventviewer))) -Report -Days 30
+        & ([scriptblock]::Create((irm pxdtek.com/ev))) -Report -Days 30
 
 .PARAMETER Days
     How far back to look: 1, 7 (default) or 30 days (any number from 1 to 365 works).
@@ -39,9 +39,13 @@ param(
     [switch]$Ticket
 )
 
-$script:PevVersion = '1.0.1'
-$script:PevUrl = 'paxdigi.com/eventviewer'
+$script:PevVersion = '1.1.0'
+$script:PevUrl = 'pxdtek.com/ev'
 $script:PevMax = 400
+# In-memory mode (set by the pxd Toolkit console while it runs this script): nothing is saved on the PC unless the
+# user asks for a report (R / -Export). The CLI keeps no settings, logs or caches anyway; this also carries the mode
+# over to an elevated window (A).
+$script:PevInMemory = $env:PXD_INMEMORY -eq '1'
 $script:PevEll = [string][char]0x2026   # built at run time so the file stays ASCII (safe for irm | iex)
 
 # ======================================================================================
@@ -116,7 +120,7 @@ function Get-PevExceptionName([string]$hex) {
 }
 
 # ======================================================================================
-#  Rules: which events mean which problem, in plain English (same as the PAX Event Viewer app)
+#  Rules: which events mean which problem, in plain English (same as the pxd Event Viewer app)
 # ======================================================================================
 
 $script:PevRules = @(
@@ -202,7 +206,7 @@ $script:PevRules = @(
     @{ Id = 'update-failed'; Title = 'Failed Windows updates'; Sev = 'Error'; Log = 'System'
         Providers = @('Microsoft-Windows-WindowsUpdateClient'); Ids = @(20, 25, 31)
         Explain = "Updates that Windows Update couldn't download or install. One failure that later succeeds is normal; the same update failing again and again is not."
-        Fix = 'Restart and try again, free up disk space, then reset Windows Update (PAX Windows Tweaks, Features & fixes) and run SFC and DISM. Look up the 0x8... error code for specifics.'
+        Fix = 'Restart and try again, free up disk space, then reset Windows Update (pxd Windows Tweaks, Features & fixes) and run SFC and DISM. Look up the 0x8... error code for specifics.'
         Describe = { param($e)
             $title = Get-PevProp $e 1; $err = ''
             if ($e.Message -match '(?s)error (0x[0-9A-Fa-f]{8}):\s*(.+?)\.?\s*$') { $err = $Matches[1]; $title = $Matches[2].Trim() }
@@ -233,7 +237,7 @@ $script:PevRules = @(
     @{ Id = 'time'; Title = 'Clock sync problems'; Sev = 'Warning'; Log = 'System'
         Providers = @('Microsoft-Windows-Time-Service'); Ids = @(36, 129, 134)
         Explain = "Windows couldn't sync its clock. A wrong clock breaks domain logins, websites (certificate errors) and Kerberos."
-        Fix = "Run 'w32tm /resync'. On a domain, check the PC can reach a domain controller; at home, PAX Windows Tweaks can switch it to pool.ntp.org."
+        Fix = "Run 'w32tm /resync'. On a domain, check the PC can reach a domain controller; at home, pxd Windows Tweaks can switch it to pool.ntp.org."
         Describe = { param($e) $e.Key = Get-PevTrim (Get-PevFirstLine $e.Message) 90; $e.Summary = $e.Key } }
     @{ Id = 'failed-logon'; Title = 'Failed sign-ins'; Sev = 'Warning'; Log = 'Security'; NeedsAdmin = $true
         Providers = @('Microsoft-Windows-Security-Auditing'); Ids = @(4625)
@@ -538,7 +542,7 @@ function Get-PevTicketText($s, $digest) {
     [void]$sb.AppendLine("Problems in the last $($digest.Days) day(s):")
     foreach ($line in (Get-PevDigestLines $digest)) { [void]$sb.AppendLine($line) }
     [void]$sb.AppendLine()
-    [void]$sb.AppendLine("PAX Event Viewer CLI $($script:PevVersion) - $($script:PevUrl)")
+    [void]$sb.AppendLine("pxd Event Viewer CLI $($script:PevVersion) - $($script:PevUrl)")
     $sb.ToString()
 }
 
@@ -556,7 +560,7 @@ function ConvertTo-PevHtml($s, $digest) {
     $notRead = ($digest.Results | Where-Object { $_.Error } | ForEach-Object { "$(Get-PevEnc $_.Rule.Title) ($(Get-PevEnc $_.Error))" }) -join ', '
     @"
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>PAX Event Viewer - $(Get-PevEnc $s.ComputerName)</title>
+<title>pxd Event Viewer - $(Get-PevEnc $s.ComputerName)</title>
 <style>
 :root{--bg:#0e1015;--card:#161922;--line:#272c39;--text:#e8eaf0;--muted:#8a92a6;--accent:#89cff0;--crit:#f2666a;--err:#e879c6;--warn:#f5b14c;--info:#00c8ff}
 @media (prefers-color-scheme:light){:root{--bg:#f6f7fa;--card:#fff;--line:#dde1ea;--text:#1a1d24;--muted:#5d6577}}
@@ -573,7 +577,7 @@ th{width:150px;color:var(--muted);font-weight:600}.warn{color:var(--warn);font-w
 <h2>PC snapshot</h2><table>$rows</table>
 <h2>Problems</h2>$($cards -join "`n")
 $(if ($clear) { "<p><b>All clear:</b> $clear</p>" })$(if ($notRead) { "<p class='muted'>Not read: $notRead</p>" })
-<p class="muted">PAX Event Viewer CLI $($script:PevVersion) - $($script:PevUrl)</p>
+<p class="muted">pxd Event Viewer CLI $($script:PevVersion) - $($script:PevUrl)</p>
 </main></body></html>
 "@
 }
@@ -760,14 +764,95 @@ function Restart-PevElevated {
     $self = $PSCommandPath
     $exe = (Get-Process -Id $PID).Path
     $arg = if ($self) { "-NoExit -ExecutionPolicy Bypass -File `"$self`"" } else { "-NoExit -ExecutionPolicy Bypass -Command `"irm $($script:PevUrl) | iex`"" }
+    # the elevated window doesn't inherit this process's environment, so in-memory mode is passed on in the command
+    if ($script:PevInMemory) { $arg = if ($self) { "-NoExit -ExecutionPolicy Bypass -Command `"`$env:PXD_INMEMORY='1'; & '$self'`"" } else { "-NoExit -ExecutionPolicy Bypass -Command `"`$env:PXD_INMEMORY='1'; irm $($script:PevUrl) | iex`"" } }
     try { Start-Process -FilePath $exe -ArgumentList $arg -Verb RunAs -ErrorAction Stop; $true } catch { Write-Host '  Not elevated (the prompt was cancelled).' -ForegroundColor Yellow; $false }
 }
 
+# ---- PD header ---------------------------------------------------------------------------------------------------
+# The PD logo beside the tool's name, shown once when a pxdtek CLI tool starts. The master copy is cli/PdHeader.ps1
+# in the pxdtek repo; each tool carries a copy (they run through irm | iex, so they can't load it). Keep them in sync.
+# ASCII-only on purpose, so irm | iex never trips on encoding: the solid-block logo is stored as letters
+# (U = upper half block, D = lower half block, F = full block) and turned into blocks when it's shown.
+# Each run picks one of the two logos at random; a window too narrow for the logo gets a one-line header.
+function Show-PdHeader {
+    param([string]$Name, [string]$Version = '', [string[]]$About = @(), [string]$Command = '')
+    $ascii = @(
+        '      -++++++++++-'
+        '   :++-          -++:'
+        '  ++        +#-     ++'
+        ' #-         -+@%-    -#'
+        '++    =##*%#%=-=##.   ++'
+        '%    +%. .@:+%   *#    %'
+        '%    #*   %+:@. .%+    %'
+        '++   .##=-=%#%*##=    ++'
+        ' #-    -%@+-         -#'
+        '  ++     -#+        ++'
+        '   :++-          -++:'
+        '      -++++++++++-'
+    )
+    $blocks = @(
+        '      DDDUUUUUUDDD'
+        '    DUU          UUD'
+        '  DU        UFD     UD'
+        ' FU         DDFFD    UF'
+        'DU    DFUUFFFU UUF    UD'
+        'F    DF   F UF   FF    F'
+        'F    FF   FD F   FU    F'
+        'UD    FDD DFFFDDFU    DU'
+        ' FD    UFFUU         DF'
+        '  UD     UFD        DU'
+        '    UDD          DDU'
+        '      UUUDDDDDDUUU'
+    )
+    $text = New-Object System.Collections.Generic.List[object]
+    $text.Add(@($Name, 'White'))
+    $text.Add(@(((@($Version, 'pxdtek.com') | Where-Object { $_ }) -join '  -  '), 'DarkGray'))
+    if ($About) { $text.Add(@('', 'Gray')); foreach ($a in $About) { $text.Add(@($a, 'Gray')) } }
+    if ($Command) { $text.Add(@('', 'Gray')); $text.Add(@($Command, 'DarkCyan')) }
+    $textWidth = ($text | ForEach-Object { $_[0].Length } | Measure-Object -Maximum).Maximum
+
+    $w = 0
+    try { $w = $Host.UI.RawUI.WindowSize.Width } catch {}
+    Write-Host ''
+    if ($w -gt 0 -and $w -lt 30 + $textWidth) {
+        Write-Host '  (pd) ' -NoNewline -ForegroundColor Cyan
+        Write-Host $Name -NoNewline -ForegroundColor White
+        Write-Host $(if ($Version) { "  $Version" } else { '' }) -ForegroundColor DarkGray
+        Write-Host ''
+        return
+    }
+
+    if ($null -eq (Get-Variable -Name PdHeaderStyle -Scope Script -ValueOnly -ErrorAction SilentlyContinue)) { $script:PdHeaderStyle = Get-Random -Minimum 0 -Maximum 2 }
+    $useBlocks = $script:PdHeaderStyle -eq 1
+    $top = [Math]::Max(0, [Math]::Floor(($ascii.Count - $text.Count) / 2))
+    for ($i = 0; $i -lt $ascii.Count; $i++) {
+        Write-Host '  ' -NoNewline
+        if ($useBlocks) {
+            $l = $blocks[$i].Replace('U', [string][char]0x2580).Replace('D', [string][char]0x2584).Replace('F', [string][char]0x2588)
+            Write-Host $l.PadRight(24) -NoNewline -ForegroundColor Cyan
+        } else {
+            # dense strokes white, the middle cyan, the edges dark cyan: one colour run at a time
+            $run = ''; $col = ''
+            foreach ($c in $ascii[$i].PadRight(24).ToCharArray()) {
+                $k = if ('@%#'.Contains([string]$c)) { 'White' } elseif ('*+='.Contains([string]$c)) { 'Cyan' } else { 'DarkCyan' }
+                if ($k -ne $col -and $run) { Write-Host $run -NoNewline -ForegroundColor $col; $run = '' }
+                $col = $k; $run += $c
+            }
+            if ($run) { Write-Host $run -NoNewline -ForegroundColor $col }
+        }
+        $j = $i - $top
+        if ($j -ge 0 -and $j -lt $text.Count -and $text[$j][0]) { Write-Host ('    ' + $text[$j][0]) -NoNewline -ForegroundColor $text[$j][1] }
+        Write-Host ''
+    }
+    Write-Host ''
+}
+# ---- end of PD header --------------------------------------------------------------------------------------------
+
 function Start-PevConsole([int]$Days) {
     $snap = $null; $digest = $null
-    Write-Host ''
-    Write-Host '  PAX Event Viewer' -NoNewline -ForegroundColor Cyan
-    Write-Host "  CLI $($script:PevVersion)" -ForegroundColor DarkGray
+    Show-PdHeader -Name 'pxd Event Viewer' -Version "CLI $($script:PevVersion)" -Command 'irm pxdtek.com/ev|iex'
+    if ($script:PevInMemory) { Write-Host '  In-memory: nothing is saved on this PC.' -ForegroundColor DarkGray }
     Write-Host '  Reading the PC snapshot...' -ForegroundColor DarkCyan -NoNewline
     $snap = Get-PevSnapshot
     Write-Host ("`r" + (' ' * 40) + "`r") -NoNewline
@@ -798,7 +883,7 @@ function Start-PevConsole([int]$Days) {
                 break
             }
             '^r$' {
-                $default = Join-Path ([Environment]::GetFolderPath('Desktop')) ("PAX-EventViewer-$($snap.ComputerName)-$(Get-Date -Format 'yyyyMMdd-HHmm').html")
+                $default = Join-Path ([Environment]::GetFolderPath('Desktop')) ("pxd-EventViewer-$($snap.ComputerName)-$(Get-Date -Format 'yyyyMMdd-HHmm').html")
                 $p = Read-PevKey "  Save as (.html, .txt or .json; Enter = $default)"
                 if ($script:PevEof) { break }
                 if (-not $p) { $p = $default }
@@ -819,9 +904,10 @@ function Start-PevConsole([int]$Days) {
 #  Entry
 # ======================================================================================
 
-if ($env:OS -ne 'Windows_NT') { Write-Host 'PAX Event Viewer reads Windows event logs, so it runs on Windows only.' -ForegroundColor Yellow; return }
+if ($env:OS -ne 'Windows_NT') { Write-Host 'pxd Event Viewer reads Windows event logs, so it runs on Windows only.' -ForegroundColor Yellow; return }
 
 if ($Report -or $Export -or $Ticket) {
+    if ($script:PevInMemory -and -not $Export) { Write-Host '  In-memory: nothing is saved on this PC.' -ForegroundColor DarkGray }
     $snap = Get-PevSnapshot
     $digest = Get-PevDigest $Days -Quiet
     if ($Report) { Show-PevSnapshot $snap; Write-Host ''; Show-PevTiles $digest $snap; Show-PevDigest $digest; Write-Host '' }

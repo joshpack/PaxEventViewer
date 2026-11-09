@@ -5,13 +5,13 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
-using PaxEventViewer.Core;
+using pxdEventViewer.Core;
 
-namespace PaxEventViewer.Views;
+namespace pxdEventViewer.Views;
 
 /// <summary>
 /// The whole app: a sidebar with Dashboard (PC snapshot + health tiles), Problems (plain-English event digest) and
-/// All events (browse any log). Built in code, PAX neon theme.
+/// All events (browse any log). Built in code, pxd neon theme.
 /// </summary>
 public sealed partial class MainWindow : Window
 {
@@ -46,7 +46,7 @@ public sealed partial class MainWindow : Window
     public MainWindow(bool? elevated, bool autoLoad)
     {
         _elevated = elevated ?? Elevation.IsElevated;
-        Title = _elevated ? "PAX Event Viewer (Administrator)" : "PAX Event Viewer";
+        Title = _elevated ? "pxd Event Viewer (Administrator)" : "pxd Event Viewer";
         Icon = BrandIcon.Window();
         Width = 1180;
         Height = 800;
@@ -81,7 +81,7 @@ public sealed partial class MainWindow : Window
         Grid.SetRow(bar, 2);
         main.Children.Add(bar);
 
-        Content = PaxStandard.PaxChrome.Wrap(this, body, Title, BrandIcon.Render(36));
+        Content = pxdStandard.pxdChrome.Wrap(this, body, Title, BrandIcon.Render(36));
         ShowPage("Dashboard");
         _status.Text = "Ready.";
         KeyDown += (_, e) =>
@@ -99,7 +99,7 @@ public sealed partial class MainWindow : Window
         var head = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10, Margin = new Thickness(16, 16, 16, 18) };
         head.Children.Add(new Image { Source = BrandIcon.Render(72), Width = 36, Height = 36 });
         var names = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
-        names.Children.Add(new TextBlock { Text = "PAX EVENT", FontSize = 13, FontWeight = FontWeight.Bold, LetterSpacing = 1.4, Classes = { "neon" } });
+        names.Children.Add(new TextBlock { Text = "pxd EVENT", FontSize = 13, FontWeight = FontWeight.Bold, LetterSpacing = 1.4, Classes = { "neon" } });
         names.Children.Add(new TextBlock { Text = "VIEWER", FontSize = 13, FontWeight = FontWeight.Bold, LetterSpacing = 1.4, Classes = { "neon" } });
         head.Children.Add(names);
         DockPanel.SetDock(head, Dock.Top);

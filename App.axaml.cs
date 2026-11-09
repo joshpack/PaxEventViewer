@@ -3,16 +3,16 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Threading;
-using PaxEventViewer.Views;
+using pxdEventViewer.Views;
 
-namespace PaxEventViewer;
+namespace pxdEventViewer;
 
 public partial class App : Application
 {
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
-        Styles.Add(PaxStandard.PaxChrome.Styles());   // caption-button hover colours of the PAX title bar
+        Styles.Add(pxdStandard.pxdChrome.Styles());   // caption-button hover colours of the pxd title bar
     }
 
     public override void OnFrameworkInitializationCompleted()
@@ -21,7 +21,7 @@ public partial class App : Application
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime lifetime)
         {
             var window = new MainWindow();
-            PaxStandard.PaxChrome.RememberPlacement(window, "main");
+            pxdStandard.pxdChrome.RememberPlacement(window, "main");
             lifetime.MainWindow = window;
 
             // Started again: bring this window to the front (back to maximized if it was).

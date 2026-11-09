@@ -4,10 +4,10 @@ using Avalonia.Controls.Templates;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
-using PaxEventViewer.Core;
+using pxdEventViewer.Core;
 using Ellipse = Avalonia.Controls.Shapes.Ellipse;
 
-namespace PaxEventViewer.Views;
+namespace pxdEventViewer.Views;
 
 public sealed partial class MainWindow
 {

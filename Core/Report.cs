@@ -1,7 +1,7 @@
 using System.Net;
 using System.Text;
 
-namespace PaxEventViewer.Core;
+namespace pxdEventViewer.Core;
 
 /// <summary>The snapshot and digest as ticket-ready text, or as a self-contained HTML page.</summary>
 public static class Report
@@ -61,7 +61,7 @@ public static class Report
     {
         static string H(string x) => WebUtility.HtmlEncode(x);
         var sb = new StringBuilder();
-        sb.Append("<!doctype html><html><head><meta charset=\"utf-8\"><title>").Append(H($"{s.ComputerName} — PAX Event Viewer report")).Append("</title><style>")
+        sb.Append("<!doctype html><html><head><meta charset=\"utf-8\"><title>").Append(H($"{s.ComputerName} — pxd Event Viewer report")).Append("</title><style>")
             .Append("body{font:14px/1.45 Segoe UI,system-ui,sans-serif;background:#0e1015;color:#e8eaf0;margin:0;padding:28px}")
             .Append("h1{font-size:22px;margin:0 0 2px}h2{font-size:15px;letter-spacing:.06em;text-transform:uppercase;color:#8a92a6;margin:28px 0 10px}")
             .Append(".sub{color:#8a92a6;margin-bottom:18px}table{border-collapse:collapse;width:100%;background:#161922;border:1px solid #272c39;border-radius:10px;overflow:hidden}")
@@ -70,7 +70,7 @@ public static class Report
             .Append(".card{background:#161922;border:1px solid #272c39;border-radius:10px;padding:14px 16px;margin-bottom:10px}.card b{font-size:15px}")
             .Append("ul{margin:6px 0 0 18px;padding:0}li{margin:2px 0}@media print{body{background:#fff;color:#000}table,.card{background:#fff;border-color:#ccc}}")
             .Append("</style></head><body>");
-        sb.Append("<h1>").Append(H(s.ComputerName)).Append("</h1><div class=\"sub\">PC snapshot ").Append(H(s.TakenAt.ToString("yyyy-MM-dd HH:mm"))).Append(" · PAX Event Viewer</div>");
+        sb.Append("<h1>").Append(H(s.ComputerName)).Append("</h1><div class=\"sub\">PC snapshot ").Append(H(s.TakenAt.ToString("yyyy-MM-dd HH:mm"))).Append(" · pxd Event Viewer</div>");
         sb.Append("<table>");
         foreach (var (l, v) in PcRows(s))
         {

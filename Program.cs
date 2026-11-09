@@ -1,19 +1,27 @@
 using Avalonia;
 using Avalonia.Headless;
 using Avalonia.Threading;
-using PaxEventViewer.Core;
+using pxdEventViewer.Core;
 
-namespace PaxEventViewer;
+namespace pxdEventViewer;
 
 internal static class Program
 {
-    public const string AppId = "PaxEventViewer";
+    public const string AppId = "pxdEventViewer";
 
-    /// <summary>%APPDATA%\PaxEventViewer (window placement), or PAXEV_DATA (tests).</summary>
+    /// <summary>%APPDATA%\pxdEventViewer (window placement), or PXDEV_DATA (tests).</summary>
     public static string DataFolder =>
-        Environment.GetEnvironmentVariable("PAXEV_DATA") is { Length: > 0 } custom
+        Environment.GetEnvironmentVariable("PXDEV_DATA") is { Length: > 0 } custom
             ? custom
-            : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "PaxEventViewer");
+            : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), AppId);
+
+    /// <summary>
+    /// One-time migration (1.1.0): moves the settings folder an older version kept under its former name in
+    /// <paramref name="appDataRoot"/> to <c>&lt;root&gt;\pxdEventViewer</c>. Safe to repeat; never throws. True if it moved.
+    /// The app has no autostart, file associations or shortcuts of its own; the mutex and pipe names just change.
+    /// </summary>
+    public static bool MigrateData(string appDataRoot) =>
+        pxdStandard.pxdMigrate.Folder(Path.Combine(appDataRoot, pxdStandard.pxdMigrate.FormerName(AppId)), Path.Combine(appDataRoot, AppId));
 
     private static bool Has(string[] args, string flag) => args.Any(a => a.Equals(flag, StringComparison.OrdinalIgnoreCase));
 
@@ -38,9 +46,9 @@ internal static class Program
             SelfTest.Dir = Path.GetFullPath(testDir);
             SelfTest.Sample = Has(args, "--sample");
             Directory.CreateDirectory(SelfTest.Dir);
-            if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("PAXEV_DATA")))
-                Environment.SetEnvironmentVariable("PAXEV_DATA", Path.Combine(SelfTest.Dir, "data"));
-            PaxStandard.PaxChrome.Configure(AppId, DataFolder);
+            if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("PXDEV_DATA")))
+                Environment.SetEnvironmentVariable("PXDEV_DATA", Path.Combine(SelfTest.Dir, "data"));
+            pxdStandard.pxdChrome.Configure(AppId, DataFolder);
             AppBuilder.Configure<App>()
                 .UseSkia()
                 .UseHeadless(new AvaloniaHeadlessPlatformOptions { UseHeadlessDrawing = false })
@@ -76,7 +84,10 @@ internal static class Program
         if (!SingleInstance.Claim(SingleInstance.Name(AppId), args))
             return 0;
 
-        PaxStandard.PaxChrome.Configure(AppId, DataFolder);
+        // Before anything reads settings; skipped when PXDEV_DATA points elsewhere (tests)
+        if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("PXDEV_DATA")))
+            MigrateData(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData));
+        pxdStandard.pxdChrome.Configure(AppId, DataFolder);
         BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
         return 0;
     }

@@ -3,7 +3,7 @@ using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace PaxEventViewer.Core;
+namespace pxdEventViewer.Core;
 
 public enum Severity { Critical, Error, Warning, Info }
 
@@ -245,7 +245,7 @@ public static class Events
             Id = "update-failed", Title = "Failed Windows updates", Severity = Severity.Error,
             Providers = ["Microsoft-Windows-WindowsUpdateClient"], Ids = [20, 25, 31],
             Explain = "Updates that Windows Update couldn't download or install. One failure that later succeeds is normal; the same update failing again and again is not.",
-            Fix = "Restart and try again, free up disk space, then reset Windows Update (PAX Windows Tweaks → Features & fixes) and run SFC and DISM. Look up the 0x8… error code for specifics.",
+            Fix = "Restart and try again, free up disk space, then reset Windows Update (pxd Windows Tweaks → Features & fixes) and run SFC and DISM. Look up the 0x8… error code for specifics.",
             Describe = e =>
             {
                 var m = Regex.Match(e.Message, @"error (0x[0-9A-Fa-f]{8}):\s*(.+?)\.?\s*$", RegexOptions.Singleline);
@@ -314,7 +314,7 @@ public static class Events
             Id = "time", Title = "Clock sync problems", Severity = Severity.Warning,
             Providers = ["Microsoft-Windows-Time-Service"], Ids = [36, 129, 134],
             Explain = "Windows couldn't sync its clock. A wrong clock breaks domain logins, websites (certificate errors) and Kerberos.",
-            Fix = "Run 'w32tm /resync'. On a domain, check the PC can reach a domain controller; at home, PAX Windows Tweaks can switch it to pool.ntp.org.",
+            Fix = "Run 'w32tm /resync'. On a domain, check the PC can reach a domain controller; at home, pxd Windows Tweaks can switch it to pool.ntp.org.",
             Describe = e => { e.Key = Trim(e.FirstLine, 90); e.Summary = e.Key; },
         },
         new()

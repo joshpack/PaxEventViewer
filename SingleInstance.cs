@@ -2,7 +2,7 @@ using System.IO.Pipes;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace PaxEventViewer;
+namespace pxdEventViewer;
 
 /// <summary>
 /// One copy per user: starting the exe again hands its arguments to the running copy (which brings its window to the

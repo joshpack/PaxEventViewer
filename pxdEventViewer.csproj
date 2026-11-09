@@ -5,13 +5,13 @@
     <TargetFramework>net10.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <RootNamespace>PaxEventViewer</RootNamespace>
-    <AssemblyName>PaxEventViewer</AssemblyName>
-    <Version>1.0.1</Version>
-    <Product>PAX Event Viewer</Product>
+    <RootNamespace>pxdEventViewer</RootNamespace>
+    <AssemblyName>pxdEventViewer</AssemblyName>
+    <Version>1.1.0</Version>
+    <Product>pxd Event Viewer</Product>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <!-- Rendered by the app's write-icon option (see README); a fresh clone builds without it. -->
-    <ApplicationIcon Condition="Exists('Assets\PaxEventViewer.ico')">Assets\PaxEventViewer.ico</ApplicationIcon>
+    <ApplicationIcon Condition="Exists('Assets\pxdEventViewer.ico')">Assets\pxdEventViewer.ico</ApplicationIcon>
     <ConcurrentGarbageCollection>false</ConcurrentGarbageCollection>
     <TieredPGO>false</TieredPGO>
     <InvariantGlobalization>true</InvariantGlobalization>
