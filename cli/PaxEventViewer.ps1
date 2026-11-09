@@ -1,7 +1,7 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-    PAX Event Viewer (CLI) - what happened to this PC, in plain English, right in the console.
+    PAX Event Viewer (CLI) - the PC snapshot and event log digest, right in the console.
 
 .DESCRIPTION
     The console edition of PAX Event Viewer. Nothing is installed and nothing on the PC is changed.
@@ -767,7 +767,7 @@ function Start-PevConsole([int]$Days) {
     $snap = $null; $digest = $null
     Write-Host ''
     Write-Host '  PAX Event Viewer' -NoNewline -ForegroundColor Cyan
-    Write-Host "  CLI $($script:PevVersion)  -  what happened to this PC, in plain English" -ForegroundColor DarkGray
+    Write-Host "  CLI $($script:PevVersion)" -ForegroundColor DarkGray
     Write-Host '  Reading the PC snapshot...' -ForegroundColor DarkCyan -NoNewline
     $snap = Get-PevSnapshot
     Write-Host ("`r" + (' ' * 40) + "`r") -NoNewline

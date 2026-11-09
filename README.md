@@ -1,6 +1,6 @@
 # PAX Event Viewer
 
-**What happened to this PC, in plain English.** A dashboard with everything a support ticket needs (PC, Windows, uptime, pending reboot, disks, network, antivirus, updates) and a digest of the event logs that turns blue screens, crashes, disk errors, failed updates and the rest into one line each, with what to try next.
+A dashboard with everything a support ticket needs (PC, Windows, uptime, pending reboot, disks, network, antivirus, updates) and a digest of the event logs that turns blue screens, crashes, disk errors, failed updates and the rest into one line each, with what to try next.
 
 <p align="center">
   <img src="docs/screenshots/dashboard.png" width="760" alt="PAX Event Viewer dashboard under the dark PAX title bar: tiles for blue screens, unexpected shutdowns, app crashes, disk errors, failed updates, hardware errors and pending reboot, then cards for this PC, hardware, network and security and updates on a made-up workstation">
