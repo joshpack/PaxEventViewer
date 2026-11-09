@@ -60,6 +60,7 @@ public sealed class Snapshot
 
         s.ComputerName = Environment.MachineName;
         s.User = $@"{Environment.UserDomainName}\{Environment.UserName}";
+        Try("Signed-in users", () => s.User = DescribeUsers(SignedInUsers(), s.User));
         Try("Windows", () => ReadWindows(s));
         Try("Uptime", () =>
         {
@@ -96,6 +97,42 @@ public sealed class Snapshot
         var ip = IPGlobalProperties.GetIPGlobalProperties();
         s.DomainJoined = !string.IsNullOrEmpty(ip.DomainName);
         s.Domain = s.DomainJoined ? ip.DomainName : Environment.UserDomainName == Environment.MachineName ? "WORKGROUP" : Environment.UserDomainName;
+    }
+
+    /// <summary>
+    /// The people signed in at the PC (console and Remote Desktop): the owners of each explorer.exe, falling back to
+    /// the console user. Run from a remote PowerShell, this is the person at the PC, not the admin running the report.
+    /// </summary>
+    public static List<string> SignedInUsers()
+    {
+        var users = new List<string>();
+        foreach (var o in Wmi("SELECT Handle FROM Win32_Process WHERE Name = 'explorer.exe'"))
+        {
+            try
+            {
+                using var p = (ManagementObject)o;
+                var args = new object?[] { null, null };
+                if (Convert.ToInt32(p.InvokeMethod("GetOwner", args), CultureInfo.InvariantCulture) == 0 && args[0] is string user && user.Length > 0)
+                    users.Add(args[1] is string dom && dom.Length > 0 ? $@"{dom}\{user}" : user);
+            }
+            catch
+            {
+                // that process ended, or its owner can't be read without administrator rights
+            }
+        }
+
+        if (users.Count == 0)
+            foreach (var o in Wmi("SELECT UserName FROM Win32_ComputerSystem"))
+                if (Str(o, "UserName") is { Length: > 0 } u) users.Add(u);
+        return users.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+    }
+
+    /// <summary>"CONTOSO\alex", or "CONTOSO\alex (report run by CONTOSO\admin)" when someone else runs it.</summary>
+    public static string DescribeUsers(List<string> signedIn, string runBy)
+    {
+        if (signedIn.Count == 0) return $"Nobody signed in (report run by {runBy})";
+        var list = string.Join(", ", signedIn);
+        return signedIn.Any(u => u.Equals(runBy, StringComparison.OrdinalIgnoreCase)) && signedIn.Count == 1 ? list : $"{list} (report run by {runBy})";
     }
 
     /// <summary>Why Windows wants a restart, from the usual places installers and updates leave a flag.</summary>

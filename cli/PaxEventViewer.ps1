@@ -39,7 +39,7 @@ param(
     [switch]$Ticket
 )
 
-$script:PevVersion = '1.0.0'
+$script:PevVersion = '1.0.1'
 $script:PevUrl = 'paxdigi.com/eventviewer'
 $script:PevMax = 400
 $script:PevEll = [string][char]0x2026   # built at run time so the file stays ASCII (safe for irm | iex)
@@ -360,9 +360,35 @@ function Get-PevPendingReboot {
     , $reasons.ToArray()
 }
 
+# The people signed in at the PC (console and Remote Desktop): owners of each explorer.exe, else the console user.
+# Run from a remote PowerShell, this is the person at the PC, not the admin running the report.
+function Get-PevSignedIn {
+    $users = New-Object System.Collections.Generic.List[string]
+    foreach ($p in @(Get-CimInstance Win32_Process -Filter "Name = 'explorer.exe'" -OperationTimeoutSec 15 -ErrorAction SilentlyContinue)) {
+        try {
+            $o = Invoke-CimMethod -InputObject $p -MethodName GetOwner -ErrorAction Stop
+            if ($o.ReturnValue -eq 0 -and $o.User) { $users.Add($(if ($o.Domain) { "$($o.Domain)\$($o.User)" } else { $o.User })) }
+        } catch { }
+    }
+    if ($users.Count -eq 0) {
+        $cu = (Get-CimInstance Win32_ComputerSystem -OperationTimeoutSec 15 -ErrorAction SilentlyContinue).UserName
+        if ($cu) { $users.Add($cu) }
+    }
+    , @($users | Sort-Object -Unique)
+}
+
+function Get-PevUserLine($signedIn, [string]$runBy) {
+    $signedIn = @($signedIn)
+    if ($signedIn.Count -eq 0) { return "Nobody signed in (report run by $runBy)" }
+    $list = $signedIn -join ', '
+    if ($signedIn.Count -eq 1 -and $signedIn[0] -eq $runBy) { return $list }
+    "$list (report run by $runBy)"
+}
+
 function Get-PevSnapshot {
     $s = [ordered]@{ TakenAt = Get-Date; ComputerName = $env:COMPUTERNAME; User = "$env:USERDOMAIN\$env:USERNAME"; Problems = (New-Object System.Collections.Generic.List[string]) }
     function Try-Part([string]$what, [scriptblock]$sb) { try { & $sb } catch { $s.Problems.Add("${what}: $($_.Exception.Message)") } }
+    Try-Part 'Signed-in users' { $s.User = Get-PevUserLine (Get-PevSignedIn) $s.User }
 
     Try-Part 'Windows' {
         $cv = Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion'
@@ -462,7 +488,7 @@ function Get-PevSnapshotLines($s) {
     $l = New-Object System.Collections.Generic.List[object]
     function Add([string]$k, [string]$v, [string]$warn = '') { $l.Add([pscustomobject]@{ K = $k; V = $v; Warn = $warn }) }
     Add 'Computer' "$($s.ComputerName) ($(if ($s.DomainJoined) { "domain $($s.Domain)" } else { $s.Domain }))"
-    Add 'User' $s.User
+    Add 'Signed in' $s.User
     Add 'Windows' "$($s.OsName) $($s.OsVersion) (build $($s.OsBuild))$(if ($s.InstallDate) { ', installed ' + $s.InstallDate.ToString('yyyy-MM-dd') })"
     if ($s.Uptime) { Add 'Uptime' "$(Get-PevAgo $s.Uptime) (last boot $($s.LastBoot.ToString('yyyy-MM-dd HH:mm')))" $(if ($s.Uptime.TotalDays -ge 14) { 'long uptime' }) }
     $pr = @($s.PendingReboot)

@@ -11,7 +11,7 @@ public static class Report
     public static IEnumerable<(string Label, string Value)> PcRows(Snapshot s)
     {
         yield return ("Computer", $"{s.ComputerName} ({(s.DomainJoined ? "domain " : "")}{s.Domain})");
-        yield return ("User", s.User);
+        yield return ("Signed in", s.User);
         yield return ("Windows", $"{s.OsName} {s.OsVersion} (build {s.OsBuild}){(s.InstallDate is { } i ? $", installed {i:yyyy-MM-dd}" : "")}");
         yield return ("Uptime", $"{Snapshot.Ago(s.Uptime)} (last boot {s.LastBoot:yyyy-MM-dd HH:mm})");
         yield return ("Pending reboot", s.PendingReboot.Count == 0 ? "No" : "Yes: " + string.Join(", ", s.PendingReboot));

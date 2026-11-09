@@ -71,6 +71,15 @@ Non-interactive, for remote shells and scripts:
 ```
 
 `-Ticket` copies the ticket text to the clipboard. The script is [`cli/PaxEventViewer.ps1`](cli/PaxEventViewer.ps1); the short address forwards to its raw GitHub copy.
+
+**From a remote PowerShell (admin), without the user seeing anything:** nothing opens on their screen and nothing asks for permission. *Signed in* shows the person at the PC (console and Remote Desktop sign-ins), followed by "report run by" your account.
+
+```powershell
+Invoke-Command -ComputerName PC-NAME -ScriptBlock { & ([scriptblock]::Create((irm paxdigi.com/eventviewer))) -Report -Days 7 }
+```
+
+Use `-Report` or `-Export` there: `-Ticket` would copy to the remote PC's clipboard.
+
 ## Command line
 
 | Option | What it does |

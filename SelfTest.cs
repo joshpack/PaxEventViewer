@@ -120,6 +120,9 @@ internal static class SelfTest
         Check("Failed sign-in reason and address", e.Summary == "alex wrong password from 192.168.10.88", e.Summary);
         e = Ev("restarts", "x", @"C:\WINDOWS\servicing\TrustedInstaller.exe (PC)", "PC", "Operating System: Upgrade (Planned)", "0x80020003", "restart", "", @"NT AUTHORITY\SYSTEM");
         Check("Restart: who and why", e.Summary.StartsWith(@"restart by NT AUTHORITY\SYSTEM via TrustedInstaller.exe"), e.Summary);
+        Check("Signed in: the same person running it", Snapshot.DescribeUsers([@"CONTOSO\alex"], @"CONTOSO\alex") == @"CONTOSO\alex");
+        Check("Signed in: run remotely by an admin", Snapshot.DescribeUsers([@"CONTOSO\alex"], @"CONTOSO\admin") == @"CONTOSO\alex (report run by CONTOSO\admin)");
+        Check("Signed in: nobody at the PC", Snapshot.DescribeUsers([], @"CONTOSO\admin") == @"Nobody signed in (report run by CONTOSO\admin)");
         e = Ev("app-crash", "garbage");
         Check("A message in an unexpected shape doesn't break", e.Key.Length > 0 && e.Summary.Length > 0, e.Summary);
         R.AppendLine();
