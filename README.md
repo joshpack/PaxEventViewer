@@ -53,6 +53,8 @@ A dashboard with everything a support ticket needs (PC, Windows, uptime, pending
 
 Coming from a version before 1.1.0 (when the app had another name)? The first start moves its saved window settings to `%APPDATA%\pxdEventViewer`.
 
+**Updates itself.** Each time it starts, it checks for a newer release (for at most a few seconds; offline it just opens), swaps in the new files in its own folder and reopens. `--report` runs, the administrator restart and `--self-test` don't check; `PXD_NO_UPDATE=1` turns it off.
+
 The exe isn't code-signed, so SmartScreen may warn the first time: choose **More info → Run anyway**.
 
 ## Run it from PowerShell (no install)

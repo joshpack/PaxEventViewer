@@ -9,6 +9,10 @@ internal static class Program
 {
     public const string AppId = "pxdEventViewer";
 
+    /// <summary>Where updates come from: the release asset this app is installed from (the Toolkit catalog's asset).</summary>
+    public const string UpdateRepo = "joshpack/pxdEventViewer";
+    public const string UpdateAsset = @"^pxdEventViewer-.*-win-x64\.zip$";
+
     /// <summary>%APPDATA%\pxdEventViewer (window placement), or PXDEV_DATA (tests).</summary>
     public static string DataFolder =>
         Environment.GetEnvironmentVariable("PXDEV_DATA") is { Length: > 0 } custom
@@ -34,6 +38,13 @@ internal static class Program
     [STAThread]
     public static int Main(string[] args)
     {
+        // pxd standard rule 6: an installed copy updates itself before it opens (a no-op for dev builds, --self-test,
+        // PXD_NO_UPDATE=1, offline). Not for the build step (--write-icon), scripted reports (--report: the caller
+        // waits for this process) or the elevated restart (--elevated: the first start just checked).
+        if (!Has(args, "--write-icon") && !Has(args, "--report") && !Has(args, "--elevated")
+            && pxdStandard.pxdUpdate.BeforeStart(UpdateRepo, UpdateAsset, args))
+            return 0;
+
         if (After(args, "--write-icon") is { } icon)
         {
             BuildAvaloniaApp().SetupWithoutStarting();

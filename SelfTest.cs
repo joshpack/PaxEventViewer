@@ -47,6 +47,7 @@ internal static class SelfTest
             await Placement();
             SingleInstanceCheck();
             MigrationCheck();
+            UpdateCheck();
         }
         catch (Exception ex)
         {
@@ -268,6 +269,21 @@ internal static class SelfTest
     }
 
     /// <summary>The one-time move of an older version's settings folder, in a temp root (never the real %APPDATA%).</summary>
+    /// <summary>The update-before-start never runs for a self-test or a dev build (and never touches GitHub here).</summary>
+    private static void UpdateCheck()
+    {
+        R.AppendLine("== Update before start ==");
+        Check("No update for --self-test", !pxdStandard.pxdUpdate.BeforeStart(Program.UpdateRepo, Program.UpdateAsset, ["--self-test", Dir!]));
+        var exeDir = Path.GetDirectoryName(Environment.ProcessPath ?? "") ?? "";
+        if (exeDir.Contains(@"\bin\", StringComparison.OrdinalIgnoreCase))
+            Check("No update for a bin\\ (dev) build", !pxdStandard.pxdUpdate.BeforeStart(Program.UpdateRepo, Program.UpdateAsset, []));
+        else
+            R.AppendLine("    (not a bin\\ build: the dev-build check is skipped so nothing is downloaded)");
+        Check("Update asset matches this release's zip", System.Text.RegularExpressions.Regex.IsMatch($"pxdEventViewer-{typeof(SelfTest).Assembly.GetName().Version?.ToString(3)}-win-x64.zip", Program.UpdateAsset)
+                                                         && !System.Text.RegularExpressions.Regex.IsMatch("pxdEventViewer-1.1.1-win-x64.zip.sha256", Program.UpdateAsset));
+        R.AppendLine();
+    }
+
     private static void MigrationCheck()
     {
         R.AppendLine("== Migration from the former name ==");
