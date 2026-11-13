@@ -10,7 +10,7 @@
         irm pxdtek.com/ev | iex
 
     (pxdtek.com serves the latest copy of
-        https://raw.githubusercontent.com/joshpack/pxdEventViewer/main/cli/pxdEventViewer.ps1)
+        https://raw.githubusercontent.com/pxdtek/pxdEventViewer/HEAD/cli/pxdEventViewer.ps1)
 
     It shows a PC snapshot (Windows, uptime, pending reboot, hardware, disks, network, antivirus,
     updates) and a digest of the event logs that turns blue screens, unexpected shutdowns, crashes,
@@ -39,8 +39,10 @@ param(
     [switch]$Ticket
 )
 
-$script:PevVersion = '1.1.0'
+$script:PevVersion = '1.1.2'
 $script:PevUrl = 'pxdtek.com/ev'
+$script:PevScriptUrl = 'https://pxdtek.com/ev'
+$script:PevGitHubUrl = 'https://raw.githubusercontent.com/pxdtek/pxdEventViewer/HEAD/cli/pxdEventViewer.ps1'   # fallback
 $script:PevMax = 400
 # In-memory mode (set by the pxd Toolkit console while it runs this script): nothing is saved on the PC unless the
 # user asks for a report (R / -Export). The CLI keeps no settings, logs or caches anyway; this also carries the mode
@@ -760,12 +762,20 @@ function Show-PevBrowse([int]$Days) {
     Show-PevList "$log - last $Days day(s)$(if ($search) { " - '$search'" }) - $(@($items).Count) event(s), newest first" $items '' ''
 }
 
-function Restart-PevElevated {
-    $self = $PSCommandPath
-    $exe = (Get-Process -Id $PID).Path
-    $arg = if ($self) { "-NoExit -ExecutionPolicy Bypass -File `"$self`"" } else { "-NoExit -ExecutionPolicy Bypass -Command `"irm $($script:PevUrl) | iex`"" }
+function Get-PevRelaunchCommand([string]$self) {
+    # The command the elevated window runs: this file when run from one, else the script fetched again
+    # Run through irm | iex, the elevated window fetches the script again: pxdtek.com first, the GitHub copy when that
+    # fails or answers with anything but this script (a web filter's block page is never run)
+    $fetch = '$s = try {{ irm ''{0}'' -ErrorAction Stop }} catch {{ '''' }}; if ($s -notmatch ''function Start-PevConsole'') {{ $s = irm ''{1}'' }}; if ($s -match ''function Start-PevConsole'') {{ & ([scriptblock]::Create($s)) }}' -f $script:PevScriptUrl, $script:PevGitHubUrl
+    $run = if ($self) { "& '$self'" } else { $fetch }
     # the elevated window doesn't inherit this process's environment, so in-memory mode is passed on in the command
-    if ($script:PevInMemory) { $arg = if ($self) { "-NoExit -ExecutionPolicy Bypass -Command `"`$env:PXD_INMEMORY='1'; & '$self'`"" } else { "-NoExit -ExecutionPolicy Bypass -Command `"`$env:PXD_INMEMORY='1'; irm $($script:PevUrl) | iex`"" } }
+    if ($script:PevInMemory) { $run = "`$env:PXD_INMEMORY='1'; " + $run }
+    return $run
+}
+
+function Restart-PevElevated {
+    $exe = (Get-Process -Id $PID).Path
+    $arg = "-NoExit -ExecutionPolicy Bypass -Command `"$(Get-PevRelaunchCommand $PSCommandPath)`""
     try { Start-Process -FilePath $exe -ArgumentList $arg -Verb RunAs -ErrorAction Stop; $true } catch { Write-Host '  Not elevated (the prompt was cancelled).' -ForegroundColor Yellow; $false }
 }
 

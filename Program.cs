@@ -10,7 +10,7 @@ internal static class Program
     public const string AppId = "pxdEventViewer";
 
     /// <summary>Where updates come from: the release asset this app is installed from (the Toolkit catalog's asset).</summary>
-    public const string UpdateRepo = "joshpack/pxdEventViewer";
+    public const string UpdateRepo = "pxdtek/pxdEventViewer";
     public const string UpdateAsset = @"^pxdEventViewer-.*-win-x64\.zip$";
 
     /// <summary>%APPDATA%\pxdEventViewer (window placement), or PXDEV_DATA (tests).</summary>

@@ -25,7 +25,7 @@ A dashboard with everything a support ticket needs (PC, Windows, uptime, pending
 - **All events:** browse any log (System, Application, Security, Setup, PowerShell, Task Scheduler, Windows Update, Defender, RDP sessions, boot performance), newest first, filtered by level, period and text or event ID. Events the app knows get the plain-English line and advice next to the full message.
 - **Opens as a normal user.** Only the Security log (failed sign-ins) needs administrator rights; **Restart as administrator** in the sidebar adds it.
 - **Fast:** the whole 7-day digest takes well under a second on a typical PC, and nothing ever blocks the window.
-- **pxd standard:** dark pxd title bar, remembers its window, one copy at a time, installed and kept up to date by **[pxd Toolkit](https://github.com/joshpack/pxdToolkit)**.
+- **pxd standard:** dark pxd title bar, remembers its window, one copy at a time, installed and kept up to date by **[pxd Toolkit](https://github.com/pxdtek/pxdToolkit)**.
 
 | Problems | All events |
 | --- | --- |
@@ -42,12 +42,12 @@ A dashboard with everything a support ticket needs (PC, Windows, uptime, pending
 
 ## Install (Windows)
 
-**From pxd Toolkit:** turn on pxd Event Viewer in **[pxd Toolkit](https://github.com/joshpack/pxdToolkit)** and it's downloaded and kept up to date for you.
+**From pxd Toolkit:** turn on pxd Event Viewer in **[pxd Toolkit](https://github.com/pxdtek/pxdToolkit)** and it's downloaded and kept up to date for you.
 
 **By hand:**
 
 1. Install the **[.NET 10 Runtime](https://dotnet.microsoft.com/download/dotnet/10.0)** (x64) if you don't have it.
-2. Download **`pxdEventViewer-1.1.0-win-x64.zip`** from **[the latest release](https://github.com/joshpack/pxdEventViewer/releases/latest)**.
+2. Download **`pxdEventViewer-1.1.2-win-x64.zip`** from **[the latest release](https://github.com/pxdtek/pxdEventViewer/releases/latest)**.
 3. Unzip it somewhere permanent, for example `%USERPROFILE%\Apps\pxdEventViewer`.
 4. Run `pxdEventViewer.exe`.
 
@@ -84,7 +84,7 @@ Invoke-Command -ComputerName PC-NAME -ScriptBlock { & ([scriptblock]::Create((ir
 
 Use `-Report` or `-Export` there: `-Ticket` would copy to the remote PC's clipboard.
 
-The console edition never saves anything on the PC unless you ask for a report (**R** or `-Export`), and then only where you choose. When the [pxd Toolkit](https://github.com/joshpack/pxdToolkit) console runs it with `$env:PXD_INMEMORY = '1'`, it says so at the start ("In-memory: nothing is saved on this PC."), and **A** (restart as administrator) keeps that mode in the new window. `cli\Test-InMemory.ps1` checks this.
+The console edition never saves anything on the PC unless you ask for a report (**R** or `-Export`), and then only where you choose. When the [pxd Toolkit](https://github.com/pxdtek/pxdToolkit) console runs it with `$env:PXD_INMEMORY = '1'`, it says so at the start ("In-memory: nothing is saved on this PC."), and **A** (restart as administrator) keeps that mode in the new window. `cli\Test-InMemory.ps1` checks this.
 
 ## Command line
 
